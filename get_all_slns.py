@@ -2,8 +2,6 @@
 # to solution indices.  Write the lowest-energy solution to a separate file.
 
 import sys, os
-
-from sqlalchemy import all_
 from interaction_graph_import.load_ascii_packing_problem import load_problem_from_ascii_file
 
 assert len(sys.argv) == 4, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <path_to_output_files>"
