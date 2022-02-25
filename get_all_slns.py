@@ -3,7 +3,6 @@
 
 import sys, os
 
-import numpy as np
 from interaction_graph_import.load_ascii_packing_problem import load_problem_from_ascii_file
 
 ################################################################################
@@ -42,6 +41,20 @@ def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody
     # print( "Twobody", twobody_sum )
 
     return onebody_sum + twobody_sum
+
+def extract_total_time( filename ) :
+    with open(filenamepath) as filehandle:
+        filecontents = filehandle.read().split(",")
+    #print( filecontents )
+    timeval = None
+    for entry in filecontents:
+        if entry.find( "\"qpu_sampling_time\"" ) != -1 :
+            splitentry = entry.split(" ")
+            #print( splitentry )
+            timeval = float(splitentry[len(splitentry) - 1])
+            break
+    assert timeval is not None, "Could not find \"qpu_sampling_time\" in file " + filename + "!"
+    return timeval
 
 
 ################################################################################
@@ -91,81 +104,87 @@ valid_rot_count = 0 #Number of cases with a valid rotamer assignment.
 minE = None
 best_solution = None
 
+# Computing time
+total_time_microseconds = 0.0
+
 for filename in os.listdir(solution_path):
     filenamepath = os.path.join(solution_path, filename)
     # checking if it is a file
-    if os.path.isfile(filenamepath) and filenamepath.find( "_response_" ) != -1 :
-        filecounter += 1
-        print( filenamepath )
-        print( "Rotamer_selection\tComputer_energy\tRosetta_energy\tTimes_seen" )
+    if os.path.isfile(filenamepath) :
+        if filenamepath.find( "_timing_" ) != -1 :
+            total_time_microseconds += extract_total_time( filenamepath )
+        elif filenamepath.find( "_response_" ) != -1 :
+            filecounter += 1
+            print( filenamepath )
+            print( "Rotamer_selection\tComputer_energy\tRosetta_energy\tTimes_seen" )
 
-        # Parse the file:
-        with open(filenamepath) as filehandle:
-            filecontents = filehandle.readlines()
-        firstline = True
-        for line in filecontents:
-            if(firstline == True) :
-                firstline = False
-                continue
-            #print(line.strip())
+            # Parse the file:
+            with open(filenamepath) as filehandle:
+                filecontents = filehandle.readlines()
+            firstline = True
+            for line in filecontents:
+                if(firstline == True) :
+                    firstline = False
+                    continue
+                #print(line.strip())
 
-            # Rotamer assignments map (map of seqpos->rotamer index)
-            rot_assignments = {}
+                # Rotamer assignments map (map of seqpos->rotamer index)
+                rot_assignments = {}
 
-            # Parse the line:
-            linesplit = line.split(",")
-            assert len(linesplit) == total_rotamers + 3
-            nsamples = int( linesplit[len(linesplit) - 1].strip() )
-            samplecounter += nsamples
-            #print(linesplit)
-            nodeindex = -1
-            old_seqpos = -1
-            breaknow = False
-            for i in range(0, total_rotamers) :
-                seqpos = global_to_local_mappings[i][0]
-                if seqpos != old_seqpos :
-                    old_seqpos = seqpos
-                    nodeindex += 1
-                if int(linesplit[i]) == 1 or nodeindex_to_nrotamers[nodeindex] == 1 :
-                    local_rotindex = global_to_local_mappings[i][1]
-                    assert seqpos in all_positions
-                    if seqpos in rot_assignments :
-                        #print( "BAD -- Multiple rotamers assigned." )
-                        multi_rot_count += nsamples
-                        breaknow = True
-                        break
-                    rot_assignments[seqpos] = local_rotindex
-            if( breaknow ) :
-                continue
+                # Parse the line:
+                linesplit = line.split(",")
+                assert len(linesplit) == total_rotamers + 3
+                nsamples = int( linesplit[len(linesplit) - 1].strip() )
+                samplecounter += nsamples
+                #print(linesplit)
+                nodeindex = -1
+                old_seqpos = -1
+                breaknow = False
+                for i in range(0, total_rotamers) :
+                    seqpos = global_to_local_mappings[i][0]
+                    if seqpos != old_seqpos :
+                        old_seqpos = seqpos
+                        nodeindex += 1
+                    if int(linesplit[i]) == 1 or nodeindex_to_nrotamers[nodeindex] == 1 :
+                        local_rotindex = global_to_local_mappings[i][1]
+                        assert seqpos in all_positions
+                        if seqpos in rot_assignments :
+                            #print( "BAD -- Multiple rotamers assigned." )
+                            multi_rot_count += nsamples
+                            breaknow = True
+                            break
+                        rot_assignments[seqpos] = local_rotindex
+                if( breaknow ) :
+                    continue
 
-            # Sanity checks:
-            if len(rot_assignments) != len(all_positions) :
-                #print( "BAD -- No rotamer assigned at one or more positions." )
-                no_rot_count += nsamples
-                continue
+                # Sanity checks:
+                if len(rot_assignments) != len(all_positions) :
+                    #print( "BAD -- No rotamer assigned at one or more positions." )
+                    no_rot_count += nsamples
+                    continue
 
-            outstr = "["
-            for i in range(len(all_positions)) :
-                pos = all_positions[i]
-                assert pos in rot_assignments, "Error! Seqpos " + str(pos) + " is not in rot_assignments " + str(rot_assignments)
-                outstr += "(" + str(pos) + "," + str(rot_assignments[pos]) + ")"
-                if( i < len(all_positions) - 1) :
-                    outstr += ","
-            outstr += "]"
-            if outstr in rotassignment_counts :
-                rotassignment_counts[outstr] += nsamples
-            else :
-                rotassignment_counts[outstr] = nsamples
+                outstr = "["
+                for i in range(len(all_positions)) :
+                    pos = all_positions[i]
+                    assert pos in rot_assignments, "Error! Seqpos " + str(pos) + " is not in rot_assignments " + str(rot_assignments)
+                    outstr += "(" + str(pos) + "," + str(rot_assignments[pos]) + ")"
+                    if( i < len(all_positions) - 1) :
+                        outstr += ","
+                outstr += "]"
+                if outstr in rotassignment_counts :
+                    rotassignment_counts[outstr] += nsamples
+                else :
+                    rotassignment_counts[outstr] = nsamples
 
-            rosetta_energy = calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
+                rosetta_energy = calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
 
-            if( minE == None or rosetta_energy < minE ) :
-                minE = rosetta_energy
-                best_solution = outstr
+                if( minE == None or rosetta_energy < minE ) :
+                    minE = rosetta_energy
+                    best_solution = outstr
 
-            outstr += " " + linesplit[len(linesplit) - 2] + " " + str(rosetta_energy) + " " + linesplit[len(linesplit) - 1].strip()
-            print( outstr )
-            valid_rot_count += nsamples
+                outstr += " " + linesplit[len(linesplit) - 2] + " " + str(rosetta_energy) + " " + linesplit[len(linesplit) - 1].strip()
+                print( outstr )
+                valid_rot_count += nsamples
         
 print("Number of unique rotamer assignments: " + str(len(rotassignment_counts)) )
 print("Instances of multiple rotamers assigned: " + str(multi_rot_count) )
@@ -174,4 +193,9 @@ print("Valid samples: " + str(valid_rot_count))
 assert( valid_rot_count + no_rot_count + multi_rot_count == samplecounter )
 print("Total samples: " + str(samplecounter) )
 print("Best solution:\t" + best_solution)
+print("Best solution Rosetta energy:\t" + str(minE))
 print("Times best solution seen:\t" + str(rotassignment_counts[best_solution]) )
+print("Fraction of times best solution seen:\t" + str(rotassignment_counts[best_solution] / float(samplecounter)) )
+print( "Total sampling time (us):\t" + str(total_time_microseconds) )
+print( "Average time per sample (us):\t" + str(total_time_microseconds / float(samplecounter)) )
+print( "Expectation time to find best solution (us):\t" + str(total_time_microseconds / float(rotassignment_counts[best_solution])) )
