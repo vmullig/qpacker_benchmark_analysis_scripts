@@ -49,7 +49,7 @@ def get_toulbar2_solution( filename ) :
 def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
     rotamers = []
     #print( global_to_local_mappings )
-    for key in rot_assignments.keys() :
+    for key in rot_assignments :
         val = rot_assignments[key]
         globalindex = -1
         for i in range(len(global_to_local_mappings)) :
@@ -65,18 +65,24 @@ def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody
     onebody_sum = float(0.0)
     twobody_sum = float(0.0)
     for rotamer in rotamers:
+        #print( "Adding onebody[" + str(rotamer) + "] " + str(onebody_energies[rotamer]) + "." )
         onebody_sum += onebody_energies[rotamer]
 
     # print( twobody_energies_map.keys() )
 
     for i in range( 1, len(rotamers) ) :
         for j in  range( 0, i ) :
-            if (j,i) in twobody_energies_map :
-                twobody_sum += twobody_energies_map[j,i]
+            firstrot = rotamers[j]
+            secondrot = rotamers[i]
+            if (firstrot,secondrot) in twobody_energies_map :
+                #print( "Adding twobody " + str(twobody_energies_map[firstrot,secondrot]) + "." )
+                twobody_sum += twobody_energies_map[firstrot,secondrot]
 
     # print( "Onebody", onebody_sum )
     # print( "Twobody", twobody_sum )
+    # print( "Total\t", onebody_sum + twobody_sum) 
 
+    # exit()
     return onebody_sum + twobody_sum
 
 def extract_total_time( filename ) :
