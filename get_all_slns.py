@@ -3,11 +3,35 @@
 
 import sys, os
 
+import numpy as np
 from interaction_graph_import.load_ascii_packing_problem import load_problem_from_ascii_file
 
 ################################################################################
 # Functions:
 ################################################################################
+
+def get_toulbar2_solution( filename ) :
+    with open( filename ) as filehandle:
+        lines = filehandle.readlines()
+
+    outstring = "["
+    for line in lines:
+        linestripped = line.strip()
+        if linestripped.startswith("SEQPOS_") :
+            linesplit = linestripped.split(" ")
+            for entry in linesplit :
+                onetwo = entry.split("=")
+                seqpos = int(onetwo[0].split("_")[1])
+                rotindex = int(onetwo[1].split("_")[1])
+                if( outstring != "[" ) :
+                    outstring += ","
+                outstring += "(" + str(seqpos) + "," + str(rotindex) + ")"
+            break
+    
+    assert outstring != "["
+    outstring += "]"
+    return outstring
+    
 
 def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
     rotamers = []
@@ -61,18 +85,20 @@ def extract_total_time( filename ) :
 # Actual execution starts here:
 ################################################################################
 
-assert len(sys.argv) == 4, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <path_to_output_files>"
+assert len(sys.argv) == 4, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <toulbar2_file>"
 problem_file = sys.argv[1]
 solution_path = sys.argv[2]
-output_path = sys.argv[3]
+toulbar2_file = sys.argv[3]
 if solution_path[len(solution_path)-1] != "/" : solution_path = solution_path + "/"
-if output_path[len(output_path)-1] != "/" : output_path = output_path + "/"
 
 # Read the problem definition:
 nodeindex_to_nrotamers, global_to_local_mappings, onebody_energies, twobody_energies, aacomp_collection = load_problem_from_ascii_file( problem_file, format='default' )
 twobody_energies_map = {}
 for entry in twobody_energies :
     twobody_energies_map[int(entry[0]), int(entry[1])] = entry[2]
+
+# Read the Toulbar2 solution:
+toulbar2_solution = get_toulbar2_solution( toulbar2_file )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
@@ -185,17 +211,23 @@ for filename in os.listdir(solution_path):
                 outstr += " " + linesplit[len(linesplit) - 2] + " " + str(rosetta_energy) + " " + linesplit[len(linesplit) - 1].strip()
                 print( outstr )
                 valid_rot_count += nsamples
-        
-print("Number of unique rotamer assignments: " + str(len(rotassignment_counts)) )
-print("Instances of multiple rotamers assigned: " + str(multi_rot_count) )
-print("Instances of no rotamers assigned: " + str(no_rot_count) )
-print("Valid samples: " + str(valid_rot_count))
+
+print( "Number of unique rotamer assignments: " + str(len(rotassignment_counts)) )
+print( "Instances of multiple rotamers assigned: " + str(multi_rot_count) )
+print( "Instances of no rotamers assigned: " + str(no_rot_count) )
+print( "Valid samples: " + str(valid_rot_count))
 assert( valid_rot_count + no_rot_count + multi_rot_count == samplecounter )
-print("Total samples: " + str(samplecounter) )
-print("Best solution:\t" + best_solution)
-print("Best solution Rosetta energy:\t" + str(minE))
-print("Times best solution seen:\t" + str(rotassignment_counts[best_solution]) )
-print("Fraction of times best solution seen:\t" + str(rotassignment_counts[best_solution] / float(samplecounter)) )
+print( "Total samples: " + str(samplecounter) )
+print( "Best solution:\t" + best_solution )
+print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
+if toulbar2_solution == best_solution :
+    print(  "Best is lowest energy:\tTRUE" )
+else :
+    print(  "Best is lowest energy:\tFALSE" )
+print( "Best solution Rosetta energy:\t" + str(minE) )
+print( "Times best solution seen:\t" + str(rotassignment_counts[best_solution]) )
+print( "Fraction of times best solution seen:\t" + str(rotassignment_counts[best_solution] / float(samplecounter)) )
 print( "Total sampling time (us):\t" + str(total_time_microseconds) )
 print( "Average time per sample (us):\t" + str(total_time_microseconds / float(samplecounter)) )
 print( "Expectation time to find best solution (us):\t" + str(total_time_microseconds / float(rotassignment_counts[best_solution])) )
+print( "Solution space size:\t", np.prod( nodeindex_to_nrotamers ) )
