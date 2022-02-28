@@ -33,6 +33,7 @@ def get_toulbar2_solution( filename ) :
                 break
         elif linestripped.startswith( "Optimum:" ) :
             linesplit = linestripped.split(" ")
+            optimal_energy = float( linesplit[1] )
             for i in range (1, len(linesplit) ) :
                 if linesplit[i].startswith("microseconds") :
                     toulbar2_time = float( linesplit[i-1] )
@@ -43,7 +44,7 @@ def get_toulbar2_solution( filename ) :
     
     assert outstring != "["
     outstring += "]"
-    return outstring, toulbar2_time
+    return outstring, toulbar2_time, optimal_energy
     
 
 def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
@@ -117,7 +118,7 @@ for entry in twobody_energies :
     twobody_energies_map[int(entry[0]), int(entry[1])] = entry[2]
 
 # Read the Toulbar2 solution:
-toulbar2_solution, toulbar2_time = get_toulbar2_solution( toulbar2_file )
+toulbar2_solution, toulbar2_time, toulbar2_energy = get_toulbar2_solution( toulbar2_file )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
@@ -240,6 +241,7 @@ print( "Total samples: " + str(samplecounter) )
 print( "Best solution:\t" + best_solution )
 print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
 print( "Toulbar2 time (us):\t" + str(toulbar2_time) )
+print( "Toulbar2 energy:\t" + str( toulbar2_energy ) )
 if toulbar2_solution == best_solution :
     print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
