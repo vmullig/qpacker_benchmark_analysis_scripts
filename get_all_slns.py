@@ -15,6 +15,8 @@ def get_toulbar2_solution( filename ) :
         lines = filehandle.readlines()
 
     outstring = "["
+    seqpos_found = False
+    time_found = False
     for line in lines:
         linestripped = line.strip()
         if linestripped.startswith("SEQPOS_") :
@@ -26,11 +28,22 @@ def get_toulbar2_solution( filename ) :
                 if( outstring != "[" ) :
                     outstring += ","
                 outstring += "(" + str(seqpos) + "," + str(rotindex) + ")"
-            break
+            seqpos_found = True
+            if time_found :
+                break
+        elif linestripped.startswith( "Optimum:" ) :
+            linesplit = linestripped.split(" ")
+            for i in range (1, len(linesplit) ) :
+                if linesplit[i].startswith("microseconds") :
+                    toulbar2_time = float( linesplit[i-1] )
+                    break
+            time_found = True
+            if seqpos_found :
+                break
     
     assert outstring != "["
     outstring += "]"
-    return outstring
+    return outstring, toulbar2_time
     
 
 def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
@@ -98,7 +111,7 @@ for entry in twobody_energies :
     twobody_energies_map[int(entry[0]), int(entry[1])] = entry[2]
 
 # Read the Toulbar2 solution:
-toulbar2_solution = get_toulbar2_solution( toulbar2_file )
+toulbar2_solution, toulbar2_time = get_toulbar2_solution( toulbar2_file )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
@@ -220,8 +233,9 @@ assert( valid_rot_count + no_rot_count + multi_rot_count == samplecounter )
 print( "Total samples: " + str(samplecounter) )
 print( "Best solution:\t" + best_solution )
 print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
+print( "Toulbar2 time (us):\t" + str(toulbar2_time) )
 if toulbar2_solution == best_solution :
-    print(  "Best is lowest energy:\tTRUE" )
+    print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "Best is lowest energy:\tFALSE" )
 print( "Best solution Rosetta energy:\t" + str(minE) )
