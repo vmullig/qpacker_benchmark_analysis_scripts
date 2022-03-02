@@ -245,7 +245,7 @@ print( "Toulbar2 energy:\t" + str( toulbar2_energy ) )
 if toulbar2_solution == best_solution :
     print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
-    print(  "Best is lowest energy:\tFALSE" )
+    print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
 print( "Best solution Rosetta energy:\t" + str(minE) )
 print( "Times best solution seen:\t" + str(rotassignment_counts[best_solution]) )
 print( "Fraction of times best solution seen:\t" + str(rotassignment_counts[best_solution] / float(samplecounter)) )
