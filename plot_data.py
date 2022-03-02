@@ -7,7 +7,8 @@ import math
 matplotlib.use('TkAgg')
 
 def fit_func(x,m,b):
-    return m*x+b
+    #return m*x+b
+    return np.exp(m*np.log(x)+b)
 
 def read_file( filename ) :
     with open( filename ) as filehandle:
@@ -46,14 +47,24 @@ plt.xscale('log')
 plt.xlabel( "Size of solution space\n(number of possible solutions)" )
 plt.ylabel( r"Average time to find lowest-energy solution ($\mu$s)" )
 
-# Linear fit:
-toulbar2_times_all_uncertainty = toulbar2_times_all**2
-toulbar2_fit, toulbar2_cov = opt.curve_fit( fit_func, probsizes_all, toulbar2_times_all, [1.0e-14, 1.0e-7], sigma=toulbar2_times_all_uncertainty, absolute_sigma=True )
-qpacker_times_solved_uncertainty = qpacker_times_solved**2
-qpacker_solved_fit, qpacker_solved_cov = opt.curve_fit( fit_func, probsizes_solved, qpacker_times_solved, [1, 1], sigma=qpacker_times_solved_uncertainty, absolute_sigma=True )
+# Power fit:
+toulbar2_times_all_uncertainty = np.power( toulbar2_times_all, 1 ) #Uncertainty is propotional to time for Toulbar2
+toulbar2_fit, toulbar2_cov = opt.curve_fit( fit_func, probsizes_all, toulbar2_times_all, [1, 1], sigma=toulbar2_times_all_uncertainty, absolute_sigma=False )
+toulbar2_fit, toulbar2_cov = opt.curve_fit( fit_func, probsizes_all, toulbar2_times_all, [1, 1] )
+qpacker_times_solved_uncertainty = np.power( qpacker_times_solved, 2 ) #Uncertainty is propotional to time squared for QPacker (see note below).
+qpacker_solved_fit, qpacker_solved_cov = opt.curve_fit( fit_func, probsizes_solved, qpacker_times_solved, [1, 1], sigma=qpacker_times_solved_uncertainty, absolute_sigma=False )
 plotrange_all = np.logspace( math.log(min(probsizes_all), 10), math.log(max(probsizes_all), 10), 150, dtype=np.float64, base=10 )
 plotrange_solved = np.logspace( math.log(min(probsizes_solved), 10), math.log(max(probsizes_solved), 10), 150, dtype=np.float64, base=10 )
 plt.plot( plotrange_all, fit_func( plotrange_all, *toulbar2_fit ), '--', c='blue', linewidth=2 )
 plt.plot( plotrange_solved, fit_func( plotrange_solved, *qpacker_solved_fit ), '--', c='red', linewidth=2 )
 
 plt.show()
+
+
+# Note on uncertainty for Qpacker:
+# t_expected = t_sample / fract_good = t_total / N_samples * N_samples / N_good = t_total / N_good
+# Assuming uncertainty in t_total is negligable,
+# Delta t_expected / t_expected = -t_total*(Delta N_good)/N_good
+# Delta t_expected = -t_expected * t_total * (Delta N_good) / (t_total / t_expected)
+# Delta t_expected = -t_expected^2 * (Delta N_good)
+# Since Delta N_good is a constant, Delta t_expected is proportional to t_expected squared.
