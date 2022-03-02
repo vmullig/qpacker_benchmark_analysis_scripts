@@ -51,9 +51,8 @@ toulbar2_times_all_uncertainty = toulbar2_times_all**2
 toulbar2_fit, toulbar2_cov = opt.curve_fit( fit_func, probsizes_all, toulbar2_times_all, [1, 1], sigma=toulbar2_times_all_uncertainty, absolute_sigma=True )
 qpacker_times_solved_uncertainty = qpacker_times_solved**2
 qpacker_solved_fit, qpacker_solved_cov = opt.curve_fit( fit_func, probsizes_solved, qpacker_times_solved, [1, 1], sigma=qpacker_times_solved_uncertainty, absolute_sigma=True )
-plotrange_all = np.logspace( math.log(min(probsizes_all), 10), math.log(max(probsizes_all), 10), 50, dtype=np.float64, base=10 )
-print( plotrange_all )
-plotrange_solved = np.logspace( math.log(min(probsizes_solved), 10), math.log(max(probsizes_solved), 10), 50, dtype=np.float64, base=10 )
+plotrange_all = np.logspace( math.log(min(probsizes_all), 10), math.log(max(probsizes_all), 10), 150, dtype=np.float64, base=10 )
+plotrange_solved = np.logspace( math.log(min(probsizes_solved), 10), math.log(max(probsizes_solved), 10), 150, dtype=np.float64, base=10 )
 plt.plot( plotrange_all, fit_func( plotrange_all, *toulbar2_fit ), '--', c='blue', linewidth=2 )
 plt.plot( plotrange_solved, fit_func( plotrange_solved, *qpacker_solved_fit ), '--', c='red', linewidth=2 )
 
