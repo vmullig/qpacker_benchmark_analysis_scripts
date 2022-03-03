@@ -42,7 +42,7 @@ toulbar2_times_all = np.concatenate( (toulbar2_times_solved, toulbar2_times_nots
 #Plotting
 fig = plt.figure( figsize=(5,5), dpi=300 )
 plt.scatter( probsizes_all, toulbar2_times_all, c='cyan', marker=".", s=50 )
-plt.scatter( probsizes_notsolved, qpacker_times_notsolved, c='None', edgecolor='red', marker=".", s=50, linewidth=0.25 )
+#plt.scatter( probsizes_notsolved, qpacker_times_notsolved, c='None', edgecolor='red', marker=".", s=50, linewidth=0.25 )
 plt.scatter( probsizes_solved, qpacker_times_solved, c='orange', marker=".", s=50 )
 plt.yscale('log')
 plt.xscale('log')
@@ -61,7 +61,7 @@ plt.plot( plotrange_solved, fit_func( plotrange_solved, *qpacker_solved_fit ), '
 
 fig.subplots_adjust(bottom=0.12, top=0.975, hspace=0.3, left=0.12, right=0.975, wspace=0.2)
 #plt.show()
-fig.savefig( "plot2.pdf" )
+fig.savefig( "plot.pdf" )
 
 # Note on uncertainty for Qpacker:
 # t_expected = t_sample / fract_good = t_total / N_samples * N_samples / N_good = t_total / N_good
