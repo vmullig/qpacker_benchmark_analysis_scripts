@@ -6,6 +6,9 @@ import math
 
 matplotlib.use('TkAgg')
 
+TODO TODO TODO REVISE READ FUNCTION TO MATCH COLUMNS
+IN extract_data_to_plot.sh, AND PLOT ROSETTA DATA.
+
 def fit_func(x,m,b):
     # return m*x+b
     return np.exp(m*np.log(x)+b)
