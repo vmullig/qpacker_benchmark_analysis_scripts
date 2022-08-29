@@ -334,7 +334,7 @@ print( "QPacker expectation time to find best solution (us):\t" + str(total_qpac
 print( "Number of unique Rosetta rotamer assignments: " + str(len(rosetta_rotassignment_counts)) )
 print( "Total Rosetta samples: " + str( len(rosetta_solutions ) ) )
 print( "Best Rosetta solution: " + best_rosetta_solution )
-print( "Best Rosetta solution ref2015 energy: " + best_rosetta_solution_energy )
+print( "Best Rosetta solution ref2015 energy: " + str(best_rosetta_solution_energy) )
 print( "Times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[best_rosetta_solution]) )
 print( "Fraction of times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[best_rosetta_solution] / float(len(rosetta_solutions))) )
 print( "Total Rosetta sampling time (us):\t" + str( sum( rosetta_times ) ) )
