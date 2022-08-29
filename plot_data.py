@@ -6,9 +6,6 @@ import math
 
 matplotlib.use('TkAgg')
 
-TODO TODO TODO REVISE READ FUNCTION TO MATCH COLUMNS
-IN extract_data_to_plot.sh, AND PLOT ROSETTA DATA.
-
 def fit_func(x,m,b):
     # return m*x+b
     return np.exp(m*np.log(x)+b)
@@ -21,6 +18,8 @@ def read_file( filename ) :
     probsizes = np.empty( [len(lines) - 1], dtype=np.int64 )
     toulbar2_times = np.empty( [len(lines) - 1], dtype=np.float64 )
     qpacker_times = np.empty( [len(lines) - 1], dtype=np.float64 )
+    rosetta_times = np.empty( [len(lines) - 1], dtype=np.float64 )
+    rosetta_finds_lowest = np.empty( [len(lines) - 1], dtype=bool )
 
     #Assume first line is header (i.e. skip line 0).
     for i in range( 1, len(lines) ) :
@@ -28,25 +27,39 @@ def read_file( filename ) :
         probsizes[i-1] = int(linesplit[0])
         toulbar2_times[i-1] = float(linesplit[1])
         qpacker_times[i-1] = float(linesplit[2])
+        rosetta_times[i-1] = float(linesplit[3])
+        if linesplit[5] == "TRUE" :
+            rosetta_finds_lowest[i-1] = True
+        else :
+            rosetta_finds_lowest[i-1] = False
     
-    return probsizes, toulbar2_times, qpacker_times
+    return probsizes, toulbar2_times, qpacker_times, rosetta_times, rosetta_finds_lowest
 
 
 # Problems where the QPacker finds the lowest-energy solution:
-probsizes_solved, toulbar2_times_solved, qpacker_times_solved = read_file( "summary_lowestE.txt" )
+probsizes_solved, toulbar2_times_solved, qpacker_times_solved, rosetta_times_solved, rosetta_finds_lowest_solved = read_file( "summary_lowestE.txt" )
 
 # Problems where the QPacker doesn't find the lowest-energy solution:
-probsizes_notsolved, toulbar2_times_notsolved, qpacker_times_notsolved = read_file( "summary_not_lowestE.txt" )
+probsizes_notsolved, toulbar2_times_notsolved, qpacker_times_notsolved, rosetta_times_notsolved, rosetta_finds_lowest_notsolved = read_file( "summary_not_lowestE.txt" )
 
 # Concatenated:
 probsizes_all = np.concatenate( (probsizes_solved, probsizes_notsolved) )
 toulbar2_times_all = np.concatenate( (toulbar2_times_solved, toulbar2_times_notsolved) )
+rosetta_times_all = np.concatenate( (rosetta_times_solved, rosetta_times_notsolved) )
+rosetta_finds_lowest_all = np.concatenate( (rosetta_finds_lowest_solved, rosetta_finds_lowest_notsolved) )
+rosetta_markers = np.empty( len(rosetta_finds_lowest_all), dtype=object )
+for i in range( len(rosetta_finds_lowest_all) ) :
+    if( rosetta_finds_lowest_all[i] == True ) :
+        rosetta_markers[i] = "."
+    else :
+        rosetta_markers[i] = "o"
 
 #Plotting
 fig = plt.figure( figsize=(5,5), dpi=300 )
 plt.scatter( probsizes_all, toulbar2_times_all, c='cyan', marker=".", s=50 )
 #plt.scatter( probsizes_notsolved, qpacker_times_notsolved, c='None', edgecolor='red', marker=".", s=50, linewidth=0.25 )
 plt.scatter( probsizes_solved, qpacker_times_solved, c='orange', marker=".", s=50 )
+plt.scatter( probsizes_all, rosetta_times_all, c='purple', marker=rosetta_markers, s=50 )
 plt.yscale('log')
 plt.xscale('log')
 plt.xlabel( "Size of solution space (number of possible solutions)" )
