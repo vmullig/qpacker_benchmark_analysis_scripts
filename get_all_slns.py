@@ -10,102 +10,6 @@ from interaction_graph_import.load_ascii_packing_problem import load_problem_fro
 # Functions:
 ################################################################################
 
-## @brief Format a string of the format:
-## 1:4,2:1,3:1,4:1,5:5,6:1,7:3,8:1,10:1
-## to instead be:
-## [(1,4),(2,1),(3,1),(4,1),(5,5),(6,1),(7,3),(8,1),(10,1)]
-def format_rosetta_solution( soln_in ) :
-    soln_out = "["
-    soln_in_separated = soln_in.split(",")
-    assert len( soln_in_separated ) > 0
-    for entry in soln_in_separated :
-        entrypair = soln_in_separated.split(":")
-        assert len( entrypair ) == 2
-        posn = entrypair[0]
-        rotindex = entrypair[1]
-        if soln_out != "[" :
-            soln_out += ","
-        soln_out += "(" + posn + "," + rotindex + ")"
-    soln_out += "]"
-    return soln_out
-
-## @brief Read the Rosetta solutions.
-def get_rosetta_solutions( filename ) :
-    with open( filename ) as filehandle:
-        lines = filehandle.readlines()
-
-    solutions = []
-    times = []
-    avgtime_us = None
-
-    in_solutions = False
-    solutions_found = False
-    
-    for line in lines:
-        if in_solutions == False :
-            if solutions_found == False and line.startswith( "Time" ) :
-                in_solutions = True
-                continue
-            elif solutions_found == True :
-                if line.startswith("AverageTime:") :
-                    splitline = line.split()
-                    assert len( splitline ) == 2
-                    avgtime_us = float( splitline[1] )
-        
-        if in_solutions == True :
-            if line == ""  :
-                in_solutions = False
-                continue
-            solutions_found = True
-            splitline = line.split()
-            assert len(splitline) == 3
-            solutions.append( format_rosetta_solution( splitline[2] ) )
-            times.append( float( splitline[0] ) )
-        
-    assert solutions_found == True
-    assert avgtime_us != None
-
-    return solutions, times, avgtime_us
-
-
-## @brief Read the Toulbar2 solution.
-def get_toulbar2_solution( filename ) :
-    with open( filename ) as filehandle:
-        lines = filehandle.readlines()
-
-    outstring = "["
-    seqpos_found = False
-    time_found = False
-    for line in lines:
-        linestripped = line.strip()
-        if linestripped.startswith("SEQPOS_") :
-            linesplit = linestripped.split(" ")
-            for entry in linesplit :
-                onetwo = entry.split("=")
-                seqpos = int(onetwo[0].split("_")[1])
-                rotindex = int(onetwo[1].split("_")[1])
-                if( outstring != "[" ) :
-                    outstring += ","
-                outstring += "(" + str(seqpos) + "," + str(rotindex) + ")"
-            seqpos_found = True
-            if time_found :
-                break
-        elif linestripped.startswith( "Optimum:" ) :
-            linesplit = linestripped.split(" ")
-            optimal_energy = float( linesplit[1] )
-            for i in range (1, len(linesplit) ) :
-                if linesplit[i].startswith("microseconds") :
-                    toulbar2_time = float( linesplit[i-1] )
-                    break
-            time_found = True
-            if seqpos_found :
-                break
-    
-    assert outstring != "["
-    outstring += "]"
-    return outstring, toulbar2_time, optimal_energy
-    
-
 def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
     rotamers = []
     #print( global_to_local_mappings )
@@ -145,6 +49,110 @@ def calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody
     # exit()
     return onebody_sum + twobody_sum
 
+## @brief Format a string of the format:
+## 1:4,2:1,3:1,4:1,5:5,6:1,7:3,8:1,10:1
+## to instead be:
+## [(1,4),(2,1),(3,1),(4,1),(5,5),(6,1),(7,3),(8,1),(10,1)]
+## @returns Formatted solution string, solution energy.
+def format_rosetta_solution( soln_in, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
+    soln_out = "["
+    rot_assignments = {}
+    soln_in_separated = soln_in.split(",")
+    assert len( soln_in_separated ) > 0
+    for entry in soln_in_separated :
+        entrypair = entry.split(":")
+        assert len( entrypair ) == 2
+        posn = int(entrypair[0])
+        rotindex = int(entrypair[1])
+        assert posn not in rot_assignments
+        rot_assignments[posn] = rotindex
+        if soln_out != "[" :
+            soln_out += ","
+        soln_out += "(" + str(posn) + "," + str(rotindex) + ")"
+    soln_out += "]"
+    soln_energy = calculate_rosetta_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
+    return soln_out, soln_energy
+
+## @brief Read the Rosetta solutions.
+def get_rosetta_solutions( filename, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
+    with open( filename ) as filehandle:
+        lines = filehandle.readlines()
+
+    solutions = []
+    times = []
+    rosetta_energies = []
+    avgtime_us = None
+
+    in_solutions = False
+    solutions_found = False
+    
+    for line in lines:
+        if in_solutions == False :
+            if solutions_found == False and line.startswith( "Time" ) :
+                in_solutions = True
+                continue
+            elif solutions_found == True :
+                if line.startswith("AverageTime:") :
+                    splitline = line.split()
+                    assert len( splitline ) == 2
+                    avgtime_us = float( splitline[1] )
+        
+        if in_solutions == True :
+            if line == ""  :
+                in_solutions = False
+                continue
+            solutions_found = True
+            splitline = line.split()
+            assert len(splitline) == 3
+            solnstring, energy = format_rosetta_solution( splitline[2], global_to_local_mappings, onebody_energies, twobody_energies_map )
+            solutions.append( solnstring )
+            times.append( float( splitline[0] ) )
+            rosetta_energies.append(energy)
+
+        
+    assert solutions_found == True
+    assert avgtime_us != None
+
+    return solutions, times, rosetta_energies, avgtime_us
+
+
+## @brief Read the Toulbar2 solution.
+def get_toulbar2_solution( filename ) :
+    with open( filename ) as filehandle:
+        lines = filehandle.readlines()
+
+    outstring = "["
+    seqpos_found = False
+    time_found = False
+    for line in lines:
+        linestripped = line.strip()
+        if linestripped.startswith("SEQPOS_") :
+            linesplit = linestripped.split(" ")
+            for entry in linesplit :
+                onetwo = entry.split("=")
+                seqpos = int(onetwo[0].split("_")[1])
+                rotindex = int(onetwo[1].split("_")[1])
+                if( outstring != "[" ) :
+                    outstring += ","
+                outstring += "(" + str(seqpos) + "," + str(rotindex) + ")"
+            seqpos_found = True
+            if time_found :
+                break
+        elif linestripped.startswith( "Optimum:" ) :
+            linesplit = linestripped.split(" ")
+            optimal_energy = float( linesplit[1] )
+            for i in range (1, len(linesplit) ) :
+                if linesplit[i].startswith("microseconds") :
+                    toulbar2_time = float( linesplit[i-1] )
+                    break
+            time_found = True
+            if seqpos_found :
+                break
+    
+    assert outstring != "["
+    outstring += "]"
+    return outstring, toulbar2_time, optimal_energy
+
 def extract_total_time( filename ) :
     with open(filenamepath) as filehandle:
         filecontents = filehandle.read().split(",")
@@ -181,7 +189,7 @@ for entry in twobody_energies :
 toulbar2_solution, toulbar2_time, toulbar2_energy = get_toulbar2_solution( toulbar2_file )
 
 # Read the Rosetta solutions:
-rosetta_solutions, rosetta_times, avg_time = get_rosetta_solutions( rosetta_file )
+rosetta_solutions, rosetta_times, rosetta_energies, avg_time = get_rosetta_solutions( rosetta_file, global_to_local_mappings, onebody_energies, twobody_energies_map )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
