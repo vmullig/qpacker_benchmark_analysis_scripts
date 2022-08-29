@@ -349,4 +349,8 @@ if toulbar2_solution == best_qpacker_solution :
     print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
+if toulbar2_solution == best_rosetta_solution :
+    print(  "Rosetta best is Toulbar2 lowest energy:\tTRUE" )
+else :
+    print(  "Rosetta best is Toulbar2 lowest energy:\tFALSE" )
 print( "Solution space size:\t", np.prod( nodeindex_to_nrotamers ) )
