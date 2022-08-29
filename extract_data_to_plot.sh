@@ -1,6 +1,6 @@
-echo "Solution_space_size QPacker_exptime Toulbar_time" > summary.txt
-echo "Solution_space_size QPacker_exptime Toulbar_time" > summary_lowestE.txt
-echo "Solution_space_size QPacker_exptime Toulbar_time" > summary_not_lowestE.txt
+echo "Solution_space_size QPacker_exptime Toulbar_time QPacker_best_matches_Toulbar" > summary.txt
+echo "Solution_space_size QPacker_exptime Toulbar_time QPacker_best_matches_Toulbar" > summary_lowestE.txt
+echo "Solution_space_size QPacker_exptime Toulbar_time QPacker_best_matches_Toulbar" > summary_not_lowestE.txt
 for f in `find . -name analysis.log`
 do
     solsize=`grep "Solution space size" $f | awk '{print $4}'`
