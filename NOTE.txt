@@ -1,0 +1,1 @@
+Tomorrow -- add analysis for number of samples that come within N kcal/mol of lowest.
