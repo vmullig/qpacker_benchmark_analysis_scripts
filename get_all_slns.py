@@ -125,7 +125,7 @@ def get_rosetta_solutions( filename, global_to_local_mappings, onebody_energies,
     assert best_solution != None
     assert best_energy != None
 
-    return solutions, best_solution, times, rosetta_energies, avgtime_us, rotassignment_counts
+    return solutions, best_solution, best_energy, times, rosetta_energies, avgtime_us, rotassignment_counts
 
 
 ## @brief Read the Toulbar2 solution.
@@ -201,7 +201,7 @@ for entry in twobody_energies :
 toulbar2_solution, toulbar2_time, toulbar2_energy = get_toulbar2_solution( toulbar2_file )
 
 # Read the Rosetta solutions:
-rosetta_solutions, best_rosetta_solution, rosetta_times, rosetta_energies, rosetta_avg_time, rosetta_rotassignment_counts = get_rosetta_solutions( rosetta_file, global_to_local_mappings, onebody_energies, twobody_energies_map )
+rosetta_solutions, best_rosetta_solution, best_rosetta_solution_energy, rosetta_times, rosetta_energies, rosetta_avg_time, rosetta_rotassignment_counts = get_rosetta_solutions( rosetta_file, global_to_local_mappings, onebody_energies, twobody_energies_map )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
@@ -323,11 +323,23 @@ print( "Valid QPacker samples: " + str(qpacker_valid_rot_count))
 assert( qpacker_valid_rot_count + qpacker_no_rot_count + qpacker_multi_rot_count == qpacker_samplecounter )
 print( "Total QPacker samples: " + str(qpacker_samplecounter) )
 print( "Best QPacker solution: " + best_qpacker_solution )
+print( "Best QPacker solution ref2015 energy:\t" + str(qpacker_minE) )
+print( "Times best QPacker solution seen:\t" + str(qpacker_rotassignment_counts[best_qpacker_solution]) )
+print( "Fraction of times best QPacker solution seen:\t" + str(qpacker_rotassignment_counts[best_qpacker_solution] / float(qpacker_samplecounter)) )
+print( "Total QPacker sampling time (us):\t" + str(total_qpacker_time_microseconds) )
+print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
+print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) )
 
 # Rosetta analysis:
 print( "Number of unique Rosetta rotamer assignments: " + str(len(rosetta_rotassignment_counts)) )
 print( "Total Rosetta samples: " + str( len(rosetta_solutions ) ) )
 print( "Best Rosetta solution: " + best_rosetta_solution )
+print( "Best Rosetta solution ref2015 energy: " + best_rosetta_solution_energy )
+print( "Times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[best_rosetta_solution]) )
+print( "Fraction of times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[best_rosetta_solution] / float(len(rosetta_solutions))) )
+print( "Total Rosetta sampling time (us):\t" + str( sum( rosetta_times ) ) )
+print( "Average Rosetta time per sample (us):\t" + str( rosetta_avg_time ) )
+print( "Rosetta expectation time to find best solution (us):\t" + str(sum( rosetta_times ) / float(rosetta_rotassignment_counts[best_rosetta_solution])) )
 
 # Toulbar2 analysis:
 print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
@@ -337,10 +349,4 @@ if toulbar2_solution == best_qpacker_solution :
     print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
-print( "Best solution Rosetta energy:\t" + str(qpacker_minE) )
-print( "Times best solution seen:\t" + str(qpacker_rotassignment_counts[best_qpacker_solution]) )
-print( "Fraction of times best solution seen:\t" + str(qpacker_rotassignment_counts[best_qpacker_solution] / float(qpacker_samplecounter)) )
-print( "Total sampling time (us):\t" + str(total_qpacker_time_microseconds) )
-print( "Average time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
-print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) )
 print( "Solution space size:\t", np.prod( nodeindex_to_nrotamers ) )

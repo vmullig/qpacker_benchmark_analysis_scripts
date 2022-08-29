@@ -7,7 +7,7 @@ do
     test "$solsize" == "" && continue
     ttime=`grep "Toulbar2 time" $f | awk '{print $4}'`
     test "$ttime" == "" && continue
-    qtime=`grep "QPacker expectation time to find best solution" $f | awk '{print $8}'`
+    qtime=`grep "QPacker expectation time to find best solution" $f | awk '{print $9}'`
     test "$qtime" == "" && continue
     bestislowest=`grep "QPacker best is Toulbar2 lowest energy" $f | awk '{print $7}'`
     echo "$solsize $ttime $qtime $bestislowest" >> summary.txt
