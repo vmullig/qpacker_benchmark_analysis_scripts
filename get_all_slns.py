@@ -10,6 +10,65 @@ from interaction_graph_import.load_ascii_packing_problem import load_problem_fro
 # Functions:
 ################################################################################
 
+## @brief Format a string of the format:
+## 1:4,2:1,3:1,4:1,5:5,6:1,7:3,8:1,10:1
+## to instead be:
+## [(1,4),(2,1),(3,1),(4,1),(5,5),(6,1),(7,3),(8,1),(10,1)]
+def format_rosetta_solution( soln_in ) :
+    soln_out = "["
+    soln_in_separated = soln_in.split(",")
+    assert len( soln_in_separated ) > 0
+    for entry in soln_in_separated :
+        entrypair = soln_in_separated.split(":")
+        assert len( entrypair ) == 2
+        posn = entrypair[0]
+        rotindex = entrypair[1]
+        if soln_out != "[" :
+            soln_out += ","
+        soln_out += "(" + posn + "," + rotindex + ")"
+    soln_out += "]"
+    return soln_out
+
+## @brief Read the Rosetta solutions.
+def get_rosetta_solutions( filename ) :
+    with open( filename ) as filehandle:
+        lines = filehandle.readlines()
+
+    solutions = []
+    times = []
+    avgtime_us = None
+
+    in_solutions = False
+    solutions_found = False
+    
+    for line in lines:
+        if in_solutions == False :
+            if solutions_found == False and line.startswith( "Time" ) :
+                in_solutions = True
+                continue
+            elif solutions_found == True :
+                if line.startswith("AverageTime:") :
+                    splitline = line.split()
+                    assert len( splitline ) == 2
+                    avgtime_us = float( splitline[1] )
+        
+        if in_solutions == True :
+            if line == ""  :
+                in_solutions = False
+                continue
+            solutions_found = True
+            splitline = line.split()
+            assert len(splitline) == 3
+            solutions.append( format_rosetta_solution( splitline[2] ) )
+            times.append( float( splitline[0] ) )
+        
+    assert solutions_found == True
+    assert avgtime_us != None
+
+    return solutions, times, avgtime_us
+
+
+## @brief Read the Toulbar2 solution.
 def get_toulbar2_solution( filename ) :
     with open( filename ) as filehandle:
         lines = filehandle.readlines()
@@ -105,10 +164,11 @@ def extract_total_time( filename ) :
 # Actual execution starts here:
 ################################################################################
 
-assert len(sys.argv) == 4, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <toulbar2_file>"
+assert len(sys.argv) == 5, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <toulbar2_file> <rosetta_file>"
 problem_file = sys.argv[1]
 solution_path = sys.argv[2]
 toulbar2_file = sys.argv[3]
+rosetta_file = sys.argv[4]
 if solution_path[len(solution_path)-1] != "/" : solution_path = solution_path + "/"
 
 # Read the problem definition:
@@ -119,6 +179,9 @@ for entry in twobody_energies :
 
 # Read the Toulbar2 solution:
 toulbar2_solution, toulbar2_time, toulbar2_energy = get_toulbar2_solution( toulbar2_file )
+
+# Read the Rosetta solutions:
+rosetta_solutions, rosetta_times, avg_time = get_rosetta_solutions( rosetta_file )
 
 # Count rotamers:
 total_rotamers = len( global_to_local_mappings )
