@@ -101,12 +101,12 @@ def get_rosetta_solutions( filename, global_to_local_mappings, onebody_energies,
                     avgtime_us = float( splitline[1] )
         
         if in_solutions == True :
-            if line == ""  :
+            if line.strip() == ""  :
                 in_solutions = False
                 continue
             solutions_found = True
             splitline = line.split()
-            assert len(splitline) == 3
+            assert len(splitline) == 3, "Error in line: " + line
             solnstring, energy = format_rosetta_solution( splitline[2], global_to_local_mappings, onebody_energies, twobody_energies_map )
             solutions.append( solnstring )
             times.append( float( splitline[0] ) )
