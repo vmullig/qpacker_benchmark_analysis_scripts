@@ -47,19 +47,19 @@ probsizes_all = np.concatenate( (probsizes_solved, probsizes_notsolved) )
 toulbar2_times_all = np.concatenate( (toulbar2_times_solved, toulbar2_times_notsolved) )
 rosetta_times_all = np.concatenate( (rosetta_times_solved, rosetta_times_notsolved) )
 rosetta_finds_lowest_all = np.concatenate( (rosetta_finds_lowest_solved, rosetta_finds_lowest_notsolved) )
-rosetta_markers = np.empty( len(rosetta_finds_lowest_all), dtype=object )
-for i in range( len(rosetta_finds_lowest_all) ) :
-    if( rosetta_finds_lowest_all[i] == True ) :
-        rosetta_markers[i] = "."
-    else :
-        rosetta_markers[i] = "o"
+# rosetta_markers = np.empty( len(rosetta_finds_lowest_all), dtype=object )
+# for i in range( len(rosetta_finds_lowest_all) ) :
+#     if( rosetta_finds_lowest_all[i] == True ) :
+#         rosetta_markers[i] = "."
+#     else :
+#         rosetta_markers[i] = "o"
 
 #Plotting
 fig = plt.figure( figsize=(5,5), dpi=300 )
 plt.scatter( probsizes_all, toulbar2_times_all, c='cyan', marker=".", s=50 )
 #plt.scatter( probsizes_notsolved, qpacker_times_notsolved, c='None', edgecolor='red', marker=".", s=50, linewidth=0.25 )
 plt.scatter( probsizes_solved, qpacker_times_solved, c='orange', marker=".", s=50 )
-plt.scatter( probsizes_all, rosetta_times_all, c='purple', marker=rosetta_markers, s=50 )
+plt.scatter( probsizes_all, rosetta_times_all, c='purple', marker=".", s=50 )
 plt.yscale('log')
 plt.xscale('log')
 plt.xlabel( "Size of solution space (number of possible solutions)" )
