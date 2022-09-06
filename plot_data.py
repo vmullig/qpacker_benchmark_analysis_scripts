@@ -4,7 +4,7 @@ import numpy as np
 import scipy.optimize as opt
 import math
 
-matplotlib.use('TkAgg')
+#matplotlib.use('TkAgg')
 
 def fit_func(x,m,b):
     # return m*x+b
