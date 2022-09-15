@@ -73,6 +73,105 @@ def format_rosetta_solution( soln_in, global_to_local_mappings, onebody_energies
     soln_energy = calculate_ref2015_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
     return soln_out, soln_energy
 
+## @brief Read the QPacker Advantage or QPacker 2000Q solutions.
+def get_qpacker_solutions( solution_path, all_positions, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
+    filecounter = 0
+    qpacker_samplecounter = 0
+
+    # Counters for unique and bad rotamer assignments
+    qpacker_rotassignment_counts = {}
+    qpacker_multi_rot_count = 0 #Number of cases with more than one rotamer assigned to a position.
+    qpacker_no_rot_count = 0 #Number of cases with no rotamer assigned to a position.
+    qpacker_valid_rot_count = 0 #Number of cases with a valid rotamer assignment.
+
+    # Finding lowest-energy solution
+    qpacker_minE = None
+    best_qpacker_solution = None
+
+    # Computing time
+    total_qpacker_time_microseconds = 0.0
+
+    for filename in os.listdir(solution_path):
+        filenamepath = os.path.join(solution_path, filename)
+        # checking if it is a file
+        if os.path.isfile(filenamepath) :
+            if filenamepath.find( "_timing_" ) != -1 :
+                total_qpacker_time_microseconds += extract_total_time( filenamepath )
+            elif filenamepath.find( "_response_" ) != -1 :
+                filecounter += 1
+                print( filenamepath )
+                print( "Rotamer_selection\tDWave_Computer_energy\tQPacker_ref2015_energy\tTimes_seen" )
+
+                # Parse the file:
+                with open(filenamepath) as filehandle:
+                    filecontents = filehandle.readlines()
+                firstline = True
+                for line in filecontents:
+                    if(firstline == True) :
+                        firstline = False
+                        continue
+                    #print(line.strip())
+
+                    # Rotamer assignments map (map of seqpos->rotamer index)
+                    rot_assignments = {}
+
+                    # Parse the line:
+                    linesplit = line.split(",")
+                    assert len(linesplit) == total_rotamers + 3
+                    nsamples = int( linesplit[len(linesplit) - 1].strip() )
+                    qpacker_samplecounter += nsamples
+                    #print(linesplit)
+                    nodeindex = -1
+                    old_seqpos = -1
+                    breaknow = False
+                    for i in range(0, total_rotamers) :
+                        seqpos = global_to_local_mappings[i][0]
+                        if seqpos != old_seqpos :
+                            old_seqpos = seqpos
+                            nodeindex += 1
+                        if int(linesplit[i]) == 1 or nodeindex_to_nrotamers[nodeindex] == 1 :
+                            local_rotindex = global_to_local_mappings[i][1]
+                            assert seqpos in all_positions
+                            if seqpos in rot_assignments :
+                                #print( "BAD -- Multiple rotamers assigned." )
+                                qpacker_multi_rot_count += nsamples
+                                breaknow = True
+                                break
+                            rot_assignments[seqpos] = local_rotindex
+                    if( breaknow ) :
+                        continue
+
+                    # Sanity checks:
+                    if len(rot_assignments) != len(all_positions) :
+                        #print( "BAD -- No rotamer assigned at one or more positions." )
+                        qpacker_no_rot_count += nsamples
+                        continue
+
+                    outstr = "["
+                    for i in range(len(all_positions)) :
+                        pos = all_positions[i]
+                        assert pos in rot_assignments, "Error! Seqpos " + str(pos) + " is not in rot_assignments " + str(rot_assignments)
+                        outstr += "(" + str(pos) + "," + str(rot_assignments[pos]) + ")"
+                        if( i < len(all_positions) - 1) :
+                            outstr += ","
+                    outstr += "]"
+                    if outstr in qpacker_rotassignment_counts :
+                        qpacker_rotassignment_counts[outstr] += nsamples
+                    else :
+                        qpacker_rotassignment_counts[outstr] = nsamples
+
+                    qpacker_ref2015_energy = calculate_ref2015_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
+
+                    if( qpacker_minE == None or qpacker_ref2015_energy < qpacker_minE ) :
+                        qpacker_minE = qpacker_ref2015_energy
+                        best_qpacker_solution = outstr
+
+                    outstr += " " + linesplit[len(linesplit) - 2] + " " + str(qpacker_ref2015_energy) + " " + linesplit[len(linesplit) - 1].strip()
+                    print( outstr )
+                    qpacker_valid_rot_count += nsamples
+
+    return qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, qpacker_minE, best_qpacker_solution, total_qpacker_time_microseconds
+
 ## @brief Read the Rosetta solutions.
 def get_rosetta_solutions( filename, global_to_local_mappings, onebody_energies, twobody_energies_map ) :
     with open( filename ) as filehandle:
@@ -166,7 +265,7 @@ def get_toulbar2_solution( filename ) :
     return outstring, toulbar2_time, optimal_energy
 
 def extract_total_time( filename ) :
-    with open(filenamepath) as filehandle:
+    with open(filename) as filehandle:
         filecontents = filehandle.read().split(",")
     #print( filecontents )
     timeval = None
@@ -220,102 +319,11 @@ for entry in global_to_local_mappings :
     if entry[0] not in all_positions :
         all_positions.append(entry[0])
 
-filecounter = 0
-qpacker_samplecounter = 0
+# QPacker Advantage data load:
 
-# Counters for unique and bad rotamer assignments
-qpacker_rotassignment_counts = {}
-qpacker_multi_rot_count = 0 #Number of cases with more than one rotamer assigned to a position.
-qpacker_no_rot_count = 0 #Number of cases with no rotamer assigned to a position.
-qpacker_valid_rot_count = 0 #Number of cases with a valid rotamer assignment.
+qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, qpacker_minE, best_qpacker_solution, total_qpacker_time_microseconds = get_qpacker_solutions( solution_path, all_positions, global_to_local_mappings, onebody_energies, twobody_energies_map )
 
-# Finding lowest-energy solution
-qpacker_minE = None
-best_qpacker_solution = None
-
-# Computing time
-total_qpacker_time_microseconds = 0.0
-
-for filename in os.listdir(solution_path):
-    filenamepath = os.path.join(solution_path, filename)
-    # checking if it is a file
-    if os.path.isfile(filenamepath) :
-        if filenamepath.find( "_timing_" ) != -1 :
-            total_qpacker_time_microseconds += extract_total_time( filenamepath )
-        elif filenamepath.find( "_response_" ) != -1 :
-            filecounter += 1
-            print( filenamepath )
-            print( "Rotamer_selection\tDWave_Computer_energy\tQPacker_ref2015_energy\tTimes_seen" )
-
-            # Parse the file:
-            with open(filenamepath) as filehandle:
-                filecontents = filehandle.readlines()
-            firstline = True
-            for line in filecontents:
-                if(firstline == True) :
-                    firstline = False
-                    continue
-                #print(line.strip())
-
-                # Rotamer assignments map (map of seqpos->rotamer index)
-                rot_assignments = {}
-
-                # Parse the line:
-                linesplit = line.split(",")
-                assert len(linesplit) == total_rotamers + 3
-                nsamples = int( linesplit[len(linesplit) - 1].strip() )
-                qpacker_samplecounter += nsamples
-                #print(linesplit)
-                nodeindex = -1
-                old_seqpos = -1
-                breaknow = False
-                for i in range(0, total_rotamers) :
-                    seqpos = global_to_local_mappings[i][0]
-                    if seqpos != old_seqpos :
-                        old_seqpos = seqpos
-                        nodeindex += 1
-                    if int(linesplit[i]) == 1 or nodeindex_to_nrotamers[nodeindex] == 1 :
-                        local_rotindex = global_to_local_mappings[i][1]
-                        assert seqpos in all_positions
-                        if seqpos in rot_assignments :
-                            #print( "BAD -- Multiple rotamers assigned." )
-                            qpacker_multi_rot_count += nsamples
-                            breaknow = True
-                            break
-                        rot_assignments[seqpos] = local_rotindex
-                if( breaknow ) :
-                    continue
-
-                # Sanity checks:
-                if len(rot_assignments) != len(all_positions) :
-                    #print( "BAD -- No rotamer assigned at one or more positions." )
-                    qpacker_no_rot_count += nsamples
-                    continue
-
-                outstr = "["
-                for i in range(len(all_positions)) :
-                    pos = all_positions[i]
-                    assert pos in rot_assignments, "Error! Seqpos " + str(pos) + " is not in rot_assignments " + str(rot_assignments)
-                    outstr += "(" + str(pos) + "," + str(rot_assignments[pos]) + ")"
-                    if( i < len(all_positions) - 1) :
-                        outstr += ","
-                outstr += "]"
-                if outstr in qpacker_rotassignment_counts :
-                    qpacker_rotassignment_counts[outstr] += nsamples
-                else :
-                    qpacker_rotassignment_counts[outstr] = nsamples
-
-                qpacker_ref2015_energy = calculate_ref2015_energy( rot_assignments, global_to_local_mappings, onebody_energies, twobody_energies_map )
-
-                if( qpacker_minE == None or qpacker_ref2015_energy < qpacker_minE ) :
-                    qpacker_minE = qpacker_ref2015_energy
-                    best_qpacker_solution = outstr
-
-                outstr += " " + linesplit[len(linesplit) - 2] + " " + str(qpacker_ref2015_energy) + " " + linesplit[len(linesplit) - 1].strip()
-                print( outstr )
-                qpacker_valid_rot_count += nsamples
-
-# QPacker analysis:
+# QPacker Advantage analysis:
 print( "Number of unique QPacker rotamer assignments: " + str(len(qpacker_rotassignment_counts)) )
 print( "Instances of multiple QPacker rotamers assigned: " + str(qpacker_multi_rot_count) )
 print( "Instances of no QPacker rotamers assigned: " + str(qpacker_no_rot_count) )
@@ -329,6 +337,21 @@ print( "Fraction of times best QPacker solution seen:\t" + str(qpacker_rotassign
 print( "Total QPacker sampling time (us):\t" + str(total_qpacker_time_microseconds) )
 print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
 print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) )
+
+# QPacker 2000Q analysis:
+# print( "Number of unique QPacker 2000Q rotamer assignments: " + str(len(qpacker2000Q_rotassignment_counts)) )
+# print( "Instances of multiple QPacker 2000Q rotamers assigned: " + str(qpacker2000Q_multi_rot_count) )
+# print( "Instances of no QPacker 2000Q rotamers assigned: " + str(qpacker2000Q_no_rot_count) )
+# print( "Valid QPacker 2000Q samples: " + str(qpacker2000Q_valid_rot_count))
+# assert( qpacker2000Q_valid_rot_count + qpacker2000Q_no_rot_count + qpacker2000Q_multi_rot_count == qpacker2000Q_samplecounter )
+# print( "Total QPacker 2000Q samples: " + str(qpacker2000Q_samplecounter) )
+# print( "Best QPacker 2000Q solution: " + best_qpacker2000Q_solution )
+# print( "Best QPacker 2000Q solution ref2015 energy:\t" + str(qpacker2000Q_minE) )
+# print( "Times best QPacker 2000Q solution seen:\t" + str(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution]) )
+# print( "Fraction of times best QPacker 2000Q solution seen:\t" + str(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution] / float(qpacker2000Q_samplecounter)) )
+# print( "Total QPacker 2000Q sampling time (us):\t" + str(total_qpacker2000Q_time_microseconds) )
+# print( "Average QPacker 2000Q time per sample (us):\t" + str(total_qpacker2000Q_time_microseconds / float(qpacker2000Q_samplecounter)) )
+# print( "QPacker 2000Q expectation time to find best solution (us):\t" + str(total_qpacker2000Q_time_microseconds / float(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution])) )
 
 # Rosetta analysis:
 print( "Number of unique Rosetta rotamer assignments: " + str(len(rosetta_rotassignment_counts)) )
@@ -345,14 +368,22 @@ print( "Rosetta expectation time to find best solution (us):\t" + str(sum( roset
 print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
 print( "Toulbar2 time (us):\t" + str(toulbar2_time) )
 print( "Toulbar2 energy:\t" + str( toulbar2_energy ) )
+
 if toulbar2_solution == best_qpacker_solution :
     print(  "QPacker best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
+
+# if toulbar2_solution == best_qpacker2000Q_solution :
+#     print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tTRUE" )
+# else :
+#     print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tFALSE" )
+
 if toulbar2_solution == best_rosetta_solution :
     print(  "Rosetta best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "Rosetta best is Toulbar2 lowest energy:\tFALSE" )
+
 num_posns = len(nodeindex_to_nrotamers)
 print( "Number of packable positions, N:\t" + str(num_posns) )
 soln_space_size = np.prod( nodeindex_to_nrotamers )
