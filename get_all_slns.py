@@ -99,8 +99,8 @@ def get_qpacker_solutions( solution_path, all_positions, global_to_local_mapping
                 total_qpacker_time_microseconds += extract_total_time( filenamepath )
             elif filenamepath.find( "_response_" ) != -1 :
                 filecounter += 1
-                print( filenamepath )
-                print( "Rotamer_selection\tDWave_Computer_energy\tQPacker_ref2015_energy\tTimes_seen" )
+                #print( filenamepath )
+                #print( "Rotamer_selection\tDWave_Computer_energy\tQPacker_ref2015_energy\tTimes_seen" )
 
                 # Parse the file:
                 with open(filenamepath) as filehandle:
@@ -166,8 +166,8 @@ def get_qpacker_solutions( solution_path, all_positions, global_to_local_mapping
                         qpacker_minE = qpacker_ref2015_energy
                         best_qpacker_solution = outstr
 
-                    outstr += " " + linesplit[len(linesplit) - 2] + " " + str(qpacker_ref2015_energy) + " " + linesplit[len(linesplit) - 1].strip()
-                    print( outstr )
+                    # outstr += " " + linesplit[len(linesplit) - 2] + " " + str(qpacker_ref2015_energy) + " " + linesplit[len(linesplit) - 1].strip()
+                    # print( outstr )
                     qpacker_valid_rot_count += nsamples
 
     return qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, qpacker_minE, best_qpacker_solution, total_qpacker_time_microseconds
@@ -283,12 +283,15 @@ def extract_total_time( filename ) :
 # Actual execution starts here:
 ################################################################################
 
-assert len(sys.argv) == 5, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_response_files> <toulbar2_file> <rosetta_file>"
+assert len(sys.argv) == 6, "Expected calling format: python3 get_all_slns.py <problem_file> <path_to_Advantage_response_files> <path_to_2000Q_response_files_or_NONE> <toulbar2_file> <rosetta_file>"
 problem_file = sys.argv[1]
 solution_path = sys.argv[2]
-toulbar2_file = sys.argv[3]
-rosetta_file = sys.argv[4]
+solution_path_2000Q = sys.argv[3]
+toulbar2_file = sys.argv[4]
+rosetta_file = sys.argv[5]
 if solution_path[len(solution_path)-1] != "/" : solution_path = solution_path + "/"
+if solution_path_2000Q != "NONE" :
+    if solution_path_2000Q[len(solution_path_2000Q)-1] != "/" : solution_path_2000Q = solution_path_2000Q + "/"
 
 # Read the problem definition:
 nodeindex_to_nrotamers, global_to_local_mappings, onebody_energies, twobody_energies, aacomp_collection = load_problem_from_ascii_file( problem_file, format='default' )
@@ -320,12 +323,19 @@ for entry in global_to_local_mappings :
         all_positions.append(entry[0])
 
 # QPacker Advantage data load:
-
 qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, \
     qpacker_minE, best_qpacker_solution,total_qpacker_time_microseconds = \
         get_qpacker_solutions( solution_path, all_positions, \
             global_to_local_mappings, onebody_energies, twobody_energies_map \
         )
+
+# QPacker 2000Q data load:
+if( solution_path_2000Q != "NONE" ): 
+    qpacker_2000Q_samplecounter, qpacker_2000Q_rotassignment_counts, qpacker_2000Q_multi_rot_count, qpacker_2000Q_no_rot_count, qpacker_2000Q_valid_rot_count, \
+        qpacker_2000Q_minE, best_qpacker_2000Q_solution,total_qpacker_2000Q_time_microseconds = \
+            get_qpacker_solutions( solution_path_2000Q, all_positions, \
+                global_to_local_mappings, onebody_energies, twobody_energies_map \
+            )
 
 # QPacker Advantage analysis:
 print( "Number of unique QPacker rotamer assignments: " + str(len(qpacker_rotassignment_counts)) )
@@ -340,22 +350,23 @@ print( "Times best QPacker solution seen:\t" + str(qpacker_rotassignment_counts[
 print( "Fraction of times best QPacker solution seen:\t" + str(qpacker_rotassignment_counts[best_qpacker_solution] / float(qpacker_samplecounter)) )
 print( "Total QPacker sampling time (us):\t" + str(total_qpacker_time_microseconds) )
 print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
-print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) )
+print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) + "\n" )
 
 # QPacker 2000Q analysis:
-# print( "Number of unique QPacker 2000Q rotamer assignments: " + str(len(qpacker2000Q_rotassignment_counts)) )
-# print( "Instances of multiple QPacker 2000Q rotamers assigned: " + str(qpacker2000Q_multi_rot_count) )
-# print( "Instances of no QPacker 2000Q rotamers assigned: " + str(qpacker2000Q_no_rot_count) )
-# print( "Valid QPacker 2000Q samples: " + str(qpacker2000Q_valid_rot_count))
-# assert( qpacker2000Q_valid_rot_count + qpacker2000Q_no_rot_count + qpacker2000Q_multi_rot_count == qpacker2000Q_samplecounter )
-# print( "Total QPacker 2000Q samples: " + str(qpacker2000Q_samplecounter) )
-# print( "Best QPacker 2000Q solution: " + best_qpacker2000Q_solution )
-# print( "Best QPacker 2000Q solution ref2015 energy:\t" + str(qpacker2000Q_minE) )
-# print( "Times best QPacker 2000Q solution seen:\t" + str(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution]) )
-# print( "Fraction of times best QPacker 2000Q solution seen:\t" + str(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution] / float(qpacker2000Q_samplecounter)) )
-# print( "Total QPacker 2000Q sampling time (us):\t" + str(total_qpacker2000Q_time_microseconds) )
-# print( "Average QPacker 2000Q time per sample (us):\t" + str(total_qpacker2000Q_time_microseconds / float(qpacker2000Q_samplecounter)) )
-# print( "QPacker 2000Q expectation time to find best solution (us):\t" + str(total_qpacker2000Q_time_microseconds / float(qpacker2000Q_rotassignment_counts[best_qpacker2000Q_solution])) )
+if( solution_path_2000Q != "NONE" ):
+    print( "Number of unique QPacker 2000Q rotamer assignments: " + str(len(qpacker_2000Q_rotassignment_counts)) )
+    print( "Instances of multiple QPacker 2000Q rotamers assigned: " + str(qpacker_2000Q_multi_rot_count) )
+    print( "Instances of no QPacker 2000Q rotamers assigned: " + str(qpacker_2000Q_no_rot_count) )
+    print( "Valid QPacker 2000Q samples: " + str(qpacker_2000Q_valid_rot_count))
+    assert( qpacker_2000Q_valid_rot_count + qpacker_2000Q_no_rot_count + qpacker_2000Q_multi_rot_count == qpacker_2000Q_samplecounter )
+    print( "Total QPacker 2000Q samples: " + str(qpacker_2000Q_samplecounter) )
+    print( "Best QPacker 2000Q solution: " + best_qpacker_2000Q_solution )
+    print( "Best QPacker 2000Q solution ref2015 energy:\t" + str(qpacker_2000Q_minE) )
+    print( "Times best QPacker 2000Q solution seen:\t" + str(qpacker_2000Q_rotassignment_counts[best_qpacker_2000Q_solution]) )
+    print( "Fraction of times best QPacker 2000Q solution seen:\t" + str(qpacker_2000Q_rotassignment_counts[best_qpacker_2000Q_solution] / float(qpacker_2000Q_samplecounter)) )
+    print( "Total QPacker 2000Q sampling time (us):\t" + str(total_qpacker_2000Q_time_microseconds) )
+    print( "Average QPacker 2000Q time per sample (us):\t" + str(total_qpacker_2000Q_time_microseconds / float(qpacker_2000Q_samplecounter)) )
+    print( "QPacker 2000Q expectation time to find best solution (us):\t" + str(total_qpacker_2000Q_time_microseconds / float(qpacker_2000Q_rotassignment_counts[best_qpacker_2000Q_solution])) + "\n" )
 
 # Rosetta analysis:
 print( "Number of unique Rosetta rotamer assignments: " + str(len(rosetta_rotassignment_counts)) )
@@ -366,7 +377,7 @@ print( "Times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[
 print( "Fraction of times best Rosetta solution seen:\t" + str(rosetta_rotassignment_counts[best_rosetta_solution] / float(len(rosetta_solutions))) )
 print( "Total Rosetta sampling time (us):\t" + str( sum( rosetta_times ) ) )
 print( "Average Rosetta time per sample (us):\t" + str( rosetta_avg_time ) )
-print( "Rosetta expectation time to find best solution (us):\t" + str(sum( rosetta_times ) / float(rosetta_rotassignment_counts[best_rosetta_solution])) )
+print( "Rosetta expectation time to find best solution (us):\t" + str(sum( rosetta_times ) / float(rosetta_rotassignment_counts[best_rosetta_solution])) + "\n" )
 
 # Toulbar2 analysis:
 print( "Toulbar2 lowest-energy solution:\t" + toulbar2_solution )
@@ -378,10 +389,11 @@ if toulbar2_solution == best_qpacker_solution :
 else :
     print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
 
-# if toulbar2_solution == best_qpacker2000Q_solution :
-#     print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tTRUE" )
-# else :
-#     print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tFALSE" )
+if( solution_path_2000Q != "NONE" ): 
+    if toulbar2_solution == best_qpacker_2000Q_solution :
+        print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tTRUE" )
+    else :
+        print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tFALSE" )
 
 if toulbar2_solution == best_rosetta_solution :
     print(  "Rosetta best is Toulbar2 lowest energy:\tTRUE" )
@@ -389,7 +401,7 @@ else :
     print(  "Rosetta best is Toulbar2 lowest energy:\tFALSE" )
 
 num_posns = len(nodeindex_to_nrotamers)
-print( "Number of packable positions, N:\t" + str(num_posns) )
+print( "\nNumber of packable positions, N:\t" + str(num_posns) )
 soln_space_size = np.prod( nodeindex_to_nrotamers )
 print( "Geometric average number of rotamers per position, <D>:\t" + str( float(soln_space_size) ** (1/float(num_posns)) ) )
 print( "Solution space size:\t" + str(soln_space_size) )
