@@ -321,7 +321,11 @@ for entry in global_to_local_mappings :
 
 # QPacker Advantage data load:
 
-qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, qpacker_minE, best_qpacker_solution, total_qpacker_time_microseconds = get_qpacker_solutions( solution_path, all_positions, global_to_local_mappings, onebody_energies, twobody_energies_map )
+qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qpacker_no_rot_count, qpacker_valid_rot_count, \
+    qpacker_minE, best_qpacker_solution,total_qpacker_time_microseconds = \
+        get_qpacker_solutions( solution_path, all_positions, \
+            global_to_local_mappings, onebody_energies, twobody_energies_map \
+        )
 
 # QPacker Advantage analysis:
 print( "Number of unique QPacker rotamer assignments: " + str(len(qpacker_rotassignment_counts)) )
