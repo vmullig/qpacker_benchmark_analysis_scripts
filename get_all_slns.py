@@ -330,7 +330,7 @@ qpacker_samplecounter, qpacker_rotassignment_counts, qpacker_multi_rot_count, qp
         )
 
 # QPacker 2000Q data load:
-if( solution_path_2000Q != "NONE" ): 
+if solution_path_2000Q != "NONE":
     qpacker_2000Q_samplecounter, qpacker_2000Q_rotassignment_counts, qpacker_2000Q_multi_rot_count, qpacker_2000Q_no_rot_count, qpacker_2000Q_valid_rot_count, \
         qpacker_2000Q_minE, best_qpacker_2000Q_solution,total_qpacker_2000Q_time_microseconds = \
             get_qpacker_solutions( solution_path_2000Q, all_positions, \
@@ -353,7 +353,7 @@ print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_micros
 print( "QPacker expectation time to find best solution (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_rotassignment_counts[best_qpacker_solution])) + "\n" )
 
 # QPacker 2000Q analysis:
-if( solution_path_2000Q != "NONE" ):
+if solution_path_2000Q != "NONE" :
     print( "Number of unique QPacker 2000Q rotamer assignments: " + str(len(qpacker_2000Q_rotassignment_counts)) )
     print( "Instances of multiple QPacker 2000Q rotamers assigned: " + str(qpacker_2000Q_multi_rot_count) )
     print( "Instances of no QPacker 2000Q rotamers assigned: " + str(qpacker_2000Q_no_rot_count) )
@@ -389,7 +389,7 @@ if toulbar2_solution == best_qpacker_solution :
 else :
     print(  "QPacker best is Toulbar2 lowest energy:\tFALSE" )
 
-if( solution_path_2000Q != "NONE" ): 
+if solution_path_2000Q != "NONE":
     if toulbar2_solution == best_qpacker_2000Q_solution :
         print(  "QPacker 2000Q best is Toulbar2 lowest energy:\tTRUE" )
     else :
