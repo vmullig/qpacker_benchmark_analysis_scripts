@@ -20,14 +20,14 @@ do
 		if test -f $TFILE
 		then
 			echo "$TFILE EXISTS"
-			echo "cd response_${f} && python3 ../analysis/get_all_slns.py ../../../../problems/qpacker_problem_description_${f}_full.txt ./ $TWOTHOUSANDQPATH $TFILE $RFILE >analysis.log && cd .." >> ../joblist.txt
+			echo "cd response_${f} && python3 ../analysis/get_all_slns.py ../../../../problems/qpacker_problem_description_${f}_full.txt ./ $TWOTHOUSANDQPATH $TFILE $RFILE >analysis.log && cd .. && echo \"COMPLETED JOB ${f}.\"" >> ../joblist.txt
 		else
 			#echo "$TFILE DNE"
 			TFILE="../../../../rosetta_other_problems/qpacker_problem_description_${f}/toulbar2_solution.txt"
 			if test -f $TFILE
 			then
 				echo "$TFILE EXISTS"
-			echo "cd response_${f} && python3 ../analysis/get_all_slns.py ../../../../problems/qpacker_problem_description_${f}_full.txt ./ $TWOTHOUSANDQPATH $TFILE $RFILE >analysis.log && cd .." >> ../joblist.txt
+			echo "cd response_${f} && python3 ../analysis/get_all_slns.py ../../../../problems/qpacker_problem_description_${f}_full.txt ./ $TWOTHOUSANDQPATH $TFILE $RFILE >analysis.log && cd .. && echo \"COMPLETED JOB ${f}.\"" >> ../joblist.txt
 			else
 				echo "ERROR ERROR ERROR!  $TFILE DOES NOT EXIST!  Skipping and continuing."
 			fi
