@@ -353,4 +353,8 @@ if toulbar2_solution == best_rosetta_solution :
     print(  "Rosetta best is Toulbar2 lowest energy:\tTRUE" )
 else :
     print(  "Rosetta best is Toulbar2 lowest energy:\tFALSE" )
-print( "Solution space size:\t", np.prod( nodeindex_to_nrotamers ) )
+num_posns = len(nodeindex_to_nrotamers)
+print( "Number of packable positions (N):\t" + str(num_posns) )
+soln_space_size = np.prod( nodeindex_to_nrotamers )
+print( "Geometric average number of rotamers per position (D):\t" + str( float(soln_space_size) ** (1/float(num_posns)) ) )
+print( "Solution space size:\t" + str(soln_space_size) )
