@@ -41,3 +41,4 @@ done
 
 # Run the jobs on all cores:
 cat joblist.txt | parallel -j 32
+echo "DONE!"
