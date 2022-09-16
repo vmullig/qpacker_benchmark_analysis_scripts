@@ -358,7 +358,10 @@ else :
     print( "Times best QPacker solution seen:\t0" )
     print( "Fraction of times best QPacker solution seen:\t0" )
     print( "Total QPacker sampling time (us):\t" + str(total_qpacker_time_microseconds) )
-    print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
+    if qpacker_samplecounter > 0 :
+        print( "Average QPacker time per sample (us):\t" + str(total_qpacker_time_microseconds / float(qpacker_samplecounter)) )
+    else :
+        print( "Average QPacker time per sample (us):\tN/A" )
     print( "QPacker expectation time to find best solution (us):\tN/A\n" )
 
 # QPacker 2000Q analysis:
@@ -383,7 +386,10 @@ if solution_path_2000Q != "NONE" :
         print( "Times best QPacker 2000Q solution seen:\t0")
         print( "Fraction of times best QPacker 2000Q solution seen:\t0")
         print( "Total QPacker 2000Q sampling time (us):\t" + str(total_qpacker_2000Q_time_microseconds) )
-        print( "Average QPacker 2000Q time per sample (us):\t" + str(total_qpacker_2000Q_time_microseconds / float(qpacker_2000Q_samplecounter)) )
+        if qpacker_2000Q_samplecounter > 0 :
+            print( "Average QPacker 2000Q time per sample (us):\t" + str(total_qpacker_2000Q_time_microseconds / float(qpacker_2000Q_samplecounter)) )
+        else :
+            print( "Average QPacker 2000Q time per sample (us):\tN/A" )
         print( "QPacker 2000Q expectation time to find best solution (us):\tN/A\n" )
 
 # Rosetta analysis:
