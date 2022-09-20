@@ -7,8 +7,9 @@ import math
 #matplotlib.use('TkAgg')
 
 def fit_func(x,m,b):
-    # return m*x+b
+    #return m*x+b
     return np.exp(m*np.log(x)+b)
+    #return np.power(m*np.log(x),b)
     #return np.add(np.exp(m*np.log(x)+b),c)
 
 def split_solutions( probsizes_all, times_all, finds_lowest ) :
@@ -127,7 +128,7 @@ plt.xscale('log')
 plt.xlabel( "Size of solution space (number of possible solutions)" )
 plt.ylabel( r"Average time to find lowest-energy solution ($\mu$s)" )
 
-# Power fit:
+# Exponential fit:
 # toulbar2_times_all_uncertainty = np.ones( len(probsizes_all), dtype=np.float64 ) #Uncertainty is constant for Toulbar2
 # toulbar2_fit, toulbar2_cov = opt.curve_fit( fit_func, probsizes_all, toulbar2_times_all, [1, 1], sigma=toulbar2_times_all_uncertainty, absolute_sigma=False )
 # qpacker_times_solved_uncertainty = np.power( qpacker_times_solved, 2 ) #Uncertainty is propotional to time squared for QPacker (see note below).
