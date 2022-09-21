@@ -12,26 +12,38 @@ def fit_func(x,m,b):
     #return np.power(m*np.log(x),b)
     #return np.add(np.exp(m*np.log(x)+b),c)
 
-def split_solutions( probsizes_all, times_all, finds_lowest ) :
+def split_solutions( probsizes_all, D, N, times_all, finds_lowest ) :
     assert len(probsizes_all) == len(times_all)
     assert len(probsizes_all) == len(finds_lowest)
 
     probsizes_solved = []
     probsizes_unsolved = []
+    D_solved = []
+    N_solved = []
     times_solved = []
     times_unsolved = []
+    D_unsolved = []
+    N_unsolved = []
 
     for i in range(len(probsizes_all)) :
         if finds_lowest[i] == True :
             probsizes_solved.append( probsizes_all[i] )
+            D_solved.append( D[i] )
+            N_solved.append( N[i] )
             times_solved.append( times_all[i] )
         else :
             probsizes_unsolved.append( probsizes_all[i] )
+            D_unsolved.append( D[i] )
+            N_unsolved.append( N[i] )
             times_unsolved.append( times_all[i] )
 
     return np.array( probsizes_solved, dtype=np.int64 ), \
+        np.array( D_solved, dtype=np.float64 ), \
+        np.array( N_solved, dtype=np.int64 ), \
         np.array( times_solved, dtype=np.float64 ), \
         np.array( probsizes_unsolved, dtype=np.int64 ), \
+        np.array( D_unsolved, dtype=np.float64 ), \
+        np.array( N_unsolved, dtype=np.int64 ), \
         np.array( times_unsolved, dtype=np.float64 )
 
 def parse_float( floatstr : str ) -> float :
@@ -46,6 +58,8 @@ def read_file( filename : str ) :
         lines = filehandle.readlines()
     
     probsizes = np.empty( [len(lines) - 1], dtype=np.int64 )
+    D_numrotamers = np.empty( [len(lines) - 1], dtype=np.float64 )
+    N_numpositions = np.empty( [len(lines) - 1], dtype=np.int64 )
     toulbar2_times = np.empty( [len(lines) - 1], dtype=np.float64 )
     qpacker_times = np.empty( [len(lines) - 1], dtype=np.float64 )
     qpacker_2000q_times = np.empty( [len(lines) - 1], dtype=np.float64 )
@@ -77,24 +91,31 @@ def read_file( filename : str ) :
             rosetta_finds_lowest[i-1] = True
         else :
             rosetta_finds_lowest[i-1] = False
+
+        D_numrotamers[i-1] = parse_float(linesplit[8])
+        N_numpositions[i-1] = int(linesplit[9])
     
-    return probsizes, toulbar2_times, qpacker_times, qpacker_2000q_times, rosetta_times, qpacker_finds_lowest, qpacker_2000q_finds_lowest, rosetta_finds_lowest
+    return probsizes, toulbar2_times, qpacker_times, qpacker_2000q_times, rosetta_times, qpacker_finds_lowest, qpacker_2000q_finds_lowest, rosetta_finds_lowest, D_numrotamers, N_numpositions
 
 
 print( "Reading summary.txt.", flush=True )
 probsizes_all, toulbar2_times_all, qpacker_times_all, qpacker_2000q_times_all, \
-    rosetta_times_all, qpacker_finds_lowest, qpacker_2000q_finds_lowest, rosetta_finds_lowest = \
+    rosetta_times_all, qpacker_finds_lowest, qpacker_2000q_finds_lowest, rosetta_finds_lowest, \
+    D_numrots, N_numposns = \
     read_file( "summary.txt" )
 
 print( "Splitting QPacker Advantage solutions.", flush=True )
-probsizes_qpacker_solved, qpacker_times_solved, probsizes_qpacker_unsolved, qpacker_times_unsolved = \
-    split_solutions( probsizes_all, qpacker_times_all, qpacker_finds_lowest )
+probsizes_qpacker_solved, D_qpacker_solved, N_qpacker_solved, qpacker_times_solved, \
+    probsizes_qpacker_unsolved, D_qpacker_unsolved, N_qpacker_unsolved, qpacker_times_unsolved = \
+    split_solutions( probsizes_all, D_numrots, N_numposns, qpacker_times_all, qpacker_finds_lowest )
 print( "Splitting QPacker 2000Q solutions.", flush=True )
-probsizes_qpacker_2000q_solved, qpacker_2000q_times_solved, probsizes_qpacker_2000q_unsolved, qpacker_2000q_times_unsolved = \
-    split_solutions( probsizes_all, qpacker_2000q_times_all, qpacker_2000q_finds_lowest )
+probsizes_qpacker_2000q_solved, D_qpacker_2000q_solved, N_qpacker_2000q_solved, qpacker_2000q_times_solved, \
+    probsizes_qpacker_2000q_unsolved, D_qpacker_2000q_unsolved, N_qpacker_2000q_unsolved, qpacker_2000q_times_unsolved = \
+    split_solutions( probsizes_all, D_numrots, N_numposns, qpacker_2000q_times_all, qpacker_2000q_finds_lowest )
 print( "Splitting Rosetta solutions.", flush=True )
-probsizes_rosetta_solved, rosetta_times_solved, probsizes_rosetta_unsolved, rosetta_times_unsolved = \
-    split_solutions( probsizes_all, rosetta_times_all, rosetta_finds_lowest )
+probsizes_rosetta_solved, D_rosetta_solved, N_rosetta_solved, rosetta_times_solved, \
+    probsizes_rosetta_unsolved, D_rosetta_unsolved, N_rosetta_unsolved, rosetta_times_unsolved = \
+    split_solutions( probsizes_all, D_numrots, N_numposns, rosetta_times_all, rosetta_finds_lowest )
 
 # Problems where the QPacker finds the lowest-energy solution:
 #probsizes_solved, toulbar2_times_solved, qpacker_times_solved, rosetta_times_solved, rosetta_finds_lowest_solved = read_file( "summary_lowestE.txt" )
@@ -116,16 +137,18 @@ probsizes_rosetta_solved, rosetta_times_solved, probsizes_rosetta_unsolved, rose
 
 #Plotting
 fig = plt.figure( figsize=(5,5), dpi=300 )
-plt.scatter( probsizes_qpacker_2000q_solved, qpacker_2000q_times_solved, c='brown', marker=".", s=25, label="QPacker on D-Wave 2000Q" )
-#plt.scatter( probsizes_qpacker_2000q_unsolved, qpacker_2000q_times_unsolved, c='brown', marker="o", s=25 )
-plt.scatter( probsizes_qpacker_solved, qpacker_times_solved, c='orange', marker=".", s=25, label="QPacker on D-Wave Advantage" )
-#plt.scatter( probsizes_qpacker_unsolved, qpacker_times_unsolved, c='orange', marker="o", s=25 )
-plt.scatter( probsizes_all, toulbar2_times_all, c='cyan', marker=".", s=25, label="Toulbar2 branch-and-bound" )
-plt.scatter( probsizes_rosetta_solved, rosetta_times_solved, c='purple', marker=".", s=25, label="Rosetta simulated annealer" )
+
+plt.scatter( np.multiply(D_numrots,N_numposns), toulbar2_times_all, c='cyan', marker=".", s=25, label="Toulbar2 branch-and-bound" )
+plt.scatter( np.multiply(D_rosetta_solved,N_rosetta_solved), rosetta_times_solved, c='purple', marker=".", s=25, label="Rosetta simulated annealer" )
 #plt.scatter( probsizes_unsolved, rosetta_times_unsolved, c='purple', marker="o", s=25 )
+plt.scatter( np.multiply(D_qpacker_2000q_solved,N_qpacker_2000q_solved), qpacker_2000q_times_solved, c='red', marker=".", s=25 )
+#plt.scatter( np.multiply(D_qpacker_2000q_unsolved,N_qpacker_2000q_unsolved), qpacker_2000q_times_unsolved, c='brown', marker="o", s=25 )
+plt.scatter( np.multiply(D_qpacker_solved,N_qpacker_solved), qpacker_times_solved, c='orange', marker=".", s=25, label="QPacker on D-Wave Advantage" )
+#plt.scatter( probsizes_qpacker_unsolved, qpacker_times_unsolved, c='orange', marker="o", s=25 )
+
 plt.yscale('log')
-plt.xscale('log')
-plt.xlabel( "Size of solution space (number of possible solutions)" )
+#plt.xscale('log')
+plt.xlabel( "Logical qubits needed (<D>N)" )
 plt.ylabel( r"Average time to find lowest-energy solution ($\mu$s)" )
 
 # Exponential fit:

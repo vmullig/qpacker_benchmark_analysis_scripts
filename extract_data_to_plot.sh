@@ -27,7 +27,13 @@ do
     rbestislowest=`grep "Rosetta best is Toulbar2 lowest energy" $f | awk '{print $7}'`
     test "$rbestislowest" == "" && rbestislowest="N/A"
 
-    echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest" >> summary.txt
-    test "$qbestislowest" == "TRUE" && echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest" >> summary_lowestE.txt || echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest" >> summary_not_lowestE.txt
+    D_numrotamers=`grep "Geometric average number of rotamers per position, <D>:" $f | awk '{print $9}'`
+    test "$D_numrotamers" == "" && continue
+
+    N_numposns=`grep "Number of packable positions, N:" $f | awk '{print $6}'`
+    test "$N_numposns" == "" && continue
+
+    echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest $D_numrotamers $N_numposns" >> summary.txt
+    test "$qbestislowest" == "TRUE" && echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest $D_numrotamers $N_numposns" >> summary_lowestE.txt || echo "$solsize $ttime $qtime $q2000time $rtime $qbestislowest $q2000bestislowest $rbestislowest" >> summary_not_lowestE.txt
     echo "Completed $f."
 done
