@@ -138,17 +138,30 @@ probsizes_rosetta_solved, D_rosetta_solved, N_rosetta_solved, rosetta_times_solv
 #Plotting
 fig = plt.figure( figsize=(5,5), dpi=300 )
 
-plt.scatter( np.multiply(D_numrots,N_numposns), toulbar2_times_all, c='cyan', marker=".", s=25, label="Toulbar2 branch-and-bound" )
-plt.scatter( np.multiply(D_rosetta_solved,N_rosetta_solved), rosetta_times_solved, c='purple', marker=".", s=25, label="Rosetta simulated annealer" )
-#plt.scatter( probsizes_unsolved, rosetta_times_unsolved, c='purple', marker="o", s=25 )
-plt.scatter( np.multiply(D_qpacker_2000q_solved,N_qpacker_2000q_solved), qpacker_2000q_times_solved, c='red', marker=".", s=25, label="QPacker on D-Wave 2000Q" )
-#plt.scatter( np.multiply(D_qpacker_2000q_unsolved,N_qpacker_2000q_unsolved), qpacker_2000q_times_unsolved, c='red', marker="o", s=25 )
-plt.scatter( np.multiply(D_qpacker_solved,N_qpacker_solved), qpacker_times_solved, c='orange', marker=".", s=25, label="QPacker on D-Wave Advantage" )
-#plt.scatter( probsizes_qpacker_unsolved, qpacker_times_unsolved, c='orange', marker="o", s=25 )
+# # X: <D>N on a linear scale, Y: Time to best on a log scale
+# plt.scatter( np.multiply(D_numrots,N_numposns), toulbar2_times_all, c='cyan', marker=".", s=25, label="Toulbar2 branch-and-bound" )
+# plt.scatter( np.multiply(D_rosetta_solved,N_rosetta_solved), rosetta_times_solved, c='purple', marker=".", s=25, label="Rosetta simulated annealer" )
+# #plt.scatter( probsizes_unsolved, rosetta_times_unsolved, c='purple', marker="o", s=25 )
+# plt.scatter( np.multiply(D_qpacker_2000q_solved,N_qpacker_2000q_solved), qpacker_2000q_times_solved, c='red', marker=".", s=25, label="QPacker on D-Wave 2000Q" )
+# #plt.scatter( np.multiply(D_qpacker_2000q_unsolved,N_qpacker_2000q_unsolved), qpacker_2000q_times_unsolved, c='red', marker="o", s=25 )
+# plt.scatter( np.multiply(D_qpacker_solved,N_qpacker_solved), qpacker_times_solved, c='orange', marker=".", s=25, label="QPacker on D-Wave Advantage" )
+# #plt.scatter( probsizes_qpacker_unsolved, qpacker_times_unsolved, c='orange', marker="o", s=25 )
+# plt.yscale('log')
+# #plt.xscale('log')
+# plt.xlabel( "Logical qubits needed (<D>N)" )
+# plt.ylabel( r"Average time to find lowest-energy solution ($\mu$s)" )
 
+# X: <D>^N on a log scale, Y: Time to best on a log scale
+plt.scatter( probsizes_all, toulbar2_times_all, c='cyan', marker=".", s=25, label="Toulbar2 branch-and-bound" )
+plt.scatter( probsizes_rosetta_solved, rosetta_times_solved, c='purple', marker=".", s=25, label="Rosetta simulated annealer" )
+#plt.scatter( probsizes_rosetta_unsolved, rosetta_times_unsolved, c='purple', marker="o", s=25 )
+plt.scatter( probsizes_qpacker_2000q_solved, qpacker_2000q_times_solved, c='red', marker=".", s=25, label="QPacker on D-Wave 2000Q" )
+#plt.scatter( probsizes_qpacker_2000q_unsolved,N_qpacker_2000q_unsolved), qpacker_2000q_times_unsolved, c='red', marker="o", s=25 )
+plt.scatter( probsizes_qpacker_solved, qpacker_times_solved, c='orange', marker=".", s=25, label="QPacker on D-Wave Advantage" )
+#plt.scatter( probsizes_qpacker_unsolved, qpacker_times_unsolved, c='orange', marker="o", s=25 )
 plt.yscale('log')
-#plt.xscale('log')
-plt.xlabel( "Logical qubits needed (<D>N)" )
+plt.xscale('log')
+plt.xlabel( "Size of solution space (number of possible solutions)" )
 plt.ylabel( r"Average time to find lowest-energy solution ($\mu$s)" )
 
 # Exponential fit:
